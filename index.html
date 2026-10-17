@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Scoreboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #1a1a1a;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #ff3333;
+        }
+        h1 {
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #ffffff;
+        }
+        #league-indicator {
+            color: #ff3333;
+            font-weight: bold;
+        }
+        #clock {
+            font-size: 1.5rem;
+            font-family: monospace;
+            background: #000000;
+            padding: 5px 15px;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+        #scoreboard-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            overflow-y: auto;
+            align-content: start;
+        }
+        .game-card {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #2d2d2d;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 140px;
+        }
+        .status {
+            font-size: 0.85rem;
+            color: #aaaaaa;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .status.live {
+            color: #ff3333;
+        }
+        .team-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .team-logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            /* High-contrast drop shadow filter to make dark logos pop */
+            filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.65));
+        }
+        .team-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .team-score {
+            font-size: 1.6rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
+        .no-games {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 1.2rem;
+            color: #888;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Live Scores: <span id="league-indicator">Loading...</span></h1>
+        <div id="clock">00:00:00 AM</div>
+    </header>
+
+    <div id="scoreboard-container">
+        <!-- Games will be injected here dynamically -->
+    </div>
+
+    <script>
+        // List of endpoints to cycle through
+        const leagues = [
+            { name: 'NFL', url: 'https://espn.com' },
+            { name: 'NBA', url: 'https://espn.com' },
+            { name: 'MLB', url: 'https://espn.com' },
+            { name: 'NHL', url: 'https://espn.com' },
+            { name: 'NCAA Football', url: 'https://espn.com' }
+        ];
+
+        let currentLeagueIndex = 0;
+
+        // Keep the clock updated
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Fetch scores from ESPN API
+        async function fetchScores() {
+            const league = leagues[currentLeagueIndex];
+            document.getElementById('league-indicator').innerText = league.name;
+            const container = document.getElementById('scoreboard-container');
+
+            try {
+                const response = await fetch(league.url);
+                const data = await response.json();
+                const events = data.events || [];
+
+                container.innerHTML = '';
+
+                if (events.length === 0) {
+                    container.innerHTML = `<div class="no-games">No games scheduled for ${league.name} today.</div>`;
+                    return;
+                }
+
+                events.forEach(game => {
+                    const competition = game.competitions[0];
+                    const status = game.status.type.detail;
+                    const isLive = game.status.type.state === 'in';
+                    
+                    const homeTeam = competition.competitors.find(c => c.side === 'home');
+                    const awayTeam = competition.competitors.find(c => c.side === 'away');
+
+                    const card = document.createElement('div');
+                    card.className = 'game-card';
+
+                    card.innerHTML = `
+                        <div class="status ${isLive ? 'live' : ''}">${isLive ? '● ' : ''}${status}</div>
+                        <div class="team-row">
+                            <div class="team-info">
+                                <img class="team-logo" src="${awayTeam.team.logo || 'https://espncdn.com'}" alt="">
+                                <span class="team-name">${awayTeam.team.displayName}</span>
+                            </div>
+                            <span class="team-score">${awayTeam.score || '0'}</span>
+                        </div>
+                        <div class="team-row">
+                            <div class="team-info">
+                                <img class="team-logo" src="${homeTeam.team.logo || 'https://espncdn.com'}" alt="">
+                                <span class="team-name">${homeTeam.team.displayName}</span>
+                            </div>
+                            <span class="team-score">${homeTeam.score || '0'}</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("Error loading scores:", error);
+                container.innerHTML = '<div class="no-games">Error loading data. Retrying...</div>';
+            }
+        }
+
+        // Change league function
+        function cycleLeagues() {
+            fetchScores();
+            // Move to the next league, loop back to 0 if at the end
+            currentLeagueIndex = (currentLeagueIndex + 1) % leagues.length;
+        }
+
+        // Start cycling every 20 seconds
+        cycleLeagues();
+        setInterval(cycleLeagues, 20000);
+    </script>
+</body>
+</html>
