@@ -13,16 +13,24 @@ urls = {
 for name, url in urls.items():
     print(f"Fetching {name} data...")
     try:
-        # Fetch raw JSON directly from ESPN API
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode())
             
         out = []
         for e in data.get('events', []):
-            comp = e['competitions'][0]
-            home = next(c for c in comp['competitors'] if c['side'] == 'home')
-            away = next(c for c in comp['competitors'] if c['side'] == 'away')
+            # FIXED: ESPN packages competitions as a list, so we grab the first element [0]
+            competitions = e.get('competitions', [])
+            if not competitions:
+                continue
+                
+            comp = competitions[0]
+            competitors = comp.get('competitors', [])
+            if len(competitors) < 2:
+                continue
+                
+            home = next((c for c in competitors if c.side == 'home'), competitors[0])
+            away = next((c for c in competitors if c.side == 'away'), competitors[1])
             
             out.append({
                 'status': e['status']['type']['detail'],
@@ -35,12 +43,11 @@ for name, url in urls.items():
                 'awayScore': away.get('score', '0')
             })
             
-        # Write clean data payload safely to a local file
         with open(f"data-{name}.json", "w") as outfile:
             json.dump(out, outfile)
+        print(f"Successfully wrote data-{name}.json with {len(out)} games.")
             
     except Exception as err:
         print(f"Error handling {name}: {err}")
-        # Always output an empty list placeholder to avoid breaking the frontend carousel
         with open(f"data-{name}.json", "w") as outfile:
             json.dump([], outfile)
