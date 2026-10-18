@@ -1,7 +1,7 @@
 name: Fetch Sports Data
 on:
   schedule:
-    - cron: '*/5 * * * *' # Automatically runs and grabs scores every 5 minutes
+    - cron: '*/5 * * * *' # Automatically updates every 5 minutes
   workflow_dispatch: # Allows you to press a button to manually force a fetch
 
 permissions:
@@ -17,11 +17,11 @@ jobs:
       - name: Fetch and Process JSON Files
         run: |
           urls=(
-            "nfl|https://espn.com"
+            "nfl|https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
             "nba|https://espn.com"
             "mlb|https://espn.com"
             "nhl|https://espn.com"
-            "ncaa|https://espn.com"
+            "ncaa|https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80"
           )
           
           for pair in "${urls[@]}"; do
@@ -29,7 +29,7 @@ jobs:
             echo "Fetching $name..."
             raw_data=$(curl -s -L "$url")
             
-            # Simple python parser script to structure data and strip out junk entries
+            # Updated Python script: Grabs ALL games (Final, Scheduled, and Live) to use as placeholders
             parsed_data=$(python3 -c "
           import json, sys
           try:
