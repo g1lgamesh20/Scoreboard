@@ -122,15 +122,13 @@
     </div>
 
     <script>
-        // We use allorigins as a free CORS proxy to bypass GitHub Pages restrictions
-        const proxy = "https://allorigins.win";
-        
+        // Swapped base URL to site.web.api.espn.com which allows native browser fetching without proxies
         const leagues = [
-            { name: 'NFL', url: proxy + encodeURIComponent('https://espn.com') },
-            { name: 'NBA', url: proxy + encodeURIComponent('https://espn.com') },
-            { name: 'MLB', url: proxy + encodeURIComponent('https://espn.com') },
-            { name: 'NHL', url: proxy + encodeURIComponent('https://espn.com') },
-            { name: 'NCAA Football', url: proxy + encodeURIComponent('https://espn.com') }
+            { name: 'NFL', url: 'https://espn.com' },
+            { name: 'NBA', url: 'https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard' },
+            { name: 'MLB', url: 'https://espn.com' },
+            { name: 'NHL', url: 'https://espn.com' },
+            { name: 'NCAA Football', url: 'https://espn.com' }
         ];
 
         let currentLeagueIndex = 0;
@@ -149,6 +147,8 @@
 
             try {
                 const response = await fetch(league.url);
+                if (!response.ok) throw new Error("Network issue");
+                
                 const data = await response.json();
                 const events = data.events || [];
 
@@ -192,7 +192,7 @@
 
             } catch (error) {
                 console.error("Error loading scores:", error);
-                container.innerHTML = '<div class="no-games">Error loading data. Retrying...</div>';
+                container.innerHTML = '<div class="no-games">Error reading data. Retrying...</div>';
             }
         }
 
