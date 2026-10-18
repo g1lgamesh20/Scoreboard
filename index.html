@@ -53,8 +53,10 @@
             document.getElementById('league-indicator').innerText = league.toUpperCase();
             const container = document.getElementById('scoreboard-container');
 
+            // Force index progression forward immediately so it doesn't get stuck on error crashes
+            currentIdx = (currentIdx + 1) % leagues.length;
+
             try {
-                // Pulls safely from your own repository space, bypassing all ESPN blocks
                 const response = await fetch(`./data-${league}.json?cb=${new Date().getTime()}`);
                 if (!response.ok) throw new Error("File missing");
                 
@@ -62,7 +64,7 @@
                 container.innerHTML = '';
 
                 if (events.length === 0) {
-                    container.innerHTML = `<div class="no-games">No active games found for ${league.toUpperCase()}.</div>`;
+                    container.innerHTML = `<div class="no-games">No active games found for ${league.toUpperCase()} today.</div>`;
                     return;
                 }
 
@@ -89,11 +91,11 @@
                     container.appendChild(card);
                 });
             } catch (e) {
-                container.innerHTML = `<div class="no-games">Data updating in background. Standby...</div>`;
+                container.innerHTML = `<div class="no-games">Data initializing. Shifting to next sports hub...</div>`;
             }
-            currentIdx = (currentIdx + 1) % leagues.length;
         }
 
+        // Initialize and rotate across components every 15 seconds
         fetchScores();
         setInterval(fetchScores, 15000);
     </script>
