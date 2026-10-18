@@ -90,7 +90,6 @@
             width: 40px;
             height: 40px;
             object-fit: contain;
-            /* High-contrast drop shadow filter to make dark logos pop */
             filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.65));
         }
         .team-name {
@@ -123,18 +122,19 @@
     </div>
 
     <script>
-        // List of endpoints to cycle through
+        // We use allorigins as a free CORS proxy to bypass GitHub Pages restrictions
+        const proxy = "https://allorigins.win";
+        
         const leagues = [
-            { name: 'NFL', url: 'https://espn.com' },
-            { name: 'NBA', url: 'https://espn.com' },
-            { name: 'MLB', url: 'https://espn.com' },
-            { name: 'NHL', url: 'https://espn.com' },
-            { name: 'NCAA Football', url: 'https://espn.com' }
+            { name: 'NFL', url: proxy + encodeURIComponent('https://espn.com') },
+            { name: 'NBA', url: proxy + encodeURIComponent('https://espn.com') },
+            { name: 'MLB', url: proxy + encodeURIComponent('https://espn.com') },
+            { name: 'NHL', url: proxy + encodeURIComponent('https://espn.com') },
+            { name: 'NCAA Football', url: proxy + encodeURIComponent('https://espn.com') }
         ];
 
         let currentLeagueIndex = 0;
 
-        // Keep the clock updated
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString();
@@ -142,7 +142,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Fetch scores from ESPN API
         async function fetchScores() {
             const league = leagues[currentLeagueIndex];
             document.getElementById('league-indicator').innerText = league.name;
@@ -197,14 +196,11 @@
             }
         }
 
-        // Change league function
         function cycleLeagues() {
             fetchScores();
-            // Move to the next league, loop back to 0 if at the end
             currentLeagueIndex = (currentLeagueIndex + 1) % leagues.length;
         }
 
-        // Start cycling every 20 seconds
         cycleLeagues();
         setInterval(cycleLeagues, 20000);
     </script>
