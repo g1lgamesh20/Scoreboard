@@ -1,65 +1,101 @@
-name: Fetch Sports Data
-on:
-  schedule:
-    - cron: '*/5 * * * *' # Automatically runs and grabs scores every 5 minutes
-  workflow_dispatch: # Allows you to press a button to manually force a fetch
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Scoreboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #121212; color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden; height: 100vh; display: flex; flex-direction: column;
+        }
+        header {
+            background-color: #1a1a1a; padding: 15px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 3px solid #ff3333;
+        }
+        h1 { font-size: 1.8rem; text-transform: uppercase; letter-spacing: 2px; }
+        #league-indicator { color: #ff3333; font-weight: bold; }
+        #clock { font-size: 1.5rem; font-family: monospace; background: #000000; padding: 5px 15px; border-radius: 4px; border: 1px solid #333; }
+        #scoreboard-container { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; padding: 20px; overflow-y: auto; align-content: start; }
+        .game-card { background-color: #1e1e1e; border-radius: 8px; padding: 15px; border: 1px solid #2d2d2d; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px; }
+        .status { font-size: 0.85rem; color: #aaaaaa; text-transform: uppercase; margin-bottom: 10px; font-weight: bold; }
+        .status.live { color: #ff3333; }
+        .team-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
+        .team-info { display: flex; align-items: center; gap: 12px; }
+        .team-logo { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.65)); }
+        .team-name { font-size: 1.2rem; font-weight: 600; }
+        .team-score { font-size: 1.6rem; font-weight: bold; font-family: monospace; }
+        .no-games { grid-column: 1 / -1; text-align: center; font-size: 1.2rem; color: #888; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Live Scores: <span id="league-indicator">Loading...</span></h1>
+        <div id="clock">00:00:00 AM</div>
+    </header>
+    <div id="scoreboard-container"></div>
 
-permissions:
-  contents: write
+    <script>
+        const leagues = ['nfl', 'nba', 'mlb', 'nhl', 'ncaa'];
+        let currentIdx = 0;
 
-jobs:
-  update-data:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+        function updateClock() {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
 
-      - name: Fetch and Process JSON Files
-        run: |
-          urls=(
-            "nfl|https://espn.com"
-            "nba|https://espn.com"
-            "mlb|https://espn.com"
-            "nhl|https://espn.com"
-            "ncaa|https://espn.com"
-          )
-          
-          for pair in "${urls[@]}"; do
-            IFS="|" read -r name url <<< "$pair"
-            echo "Fetching $name..."
-            raw_data=$(curl -s -L "$url")
-            
-            # Simple python parser script to structure data and strip out junk entries
-            parsed_data=$(python3 -c "
-          import json, sys
-          try:
-              data = json.loads('''$raw_data''')
-              out = []
-              for e in data.get('events', []):
-                  comp = e['competitions'][0]
-                  home = next(c for c in comp['competitors'] if c['side'] == 'home')
-                  away = next(c for c in comp['competitors'] if c['side'] == 'away')
-                  out.append({
-                      'status': e['status']['type']['detail'],
-                      'isLive': e['status']['type']['state'] == 'in',
-                      'homeName': home['team']['displayName'],
-                      'homeLogo': home['team'].get('logo', 'https://espncdn.com'),
-                      'homeScore': home.get('score', '0'),
-                      'awayName': away['team']['displayName'],
-                      'awayLogo': away['team'].get('logo', 'https://espncdn.com'),
-                      'awayScore': away.get('score', '0')
-                  })
-              print(json.dumps(out))
-          except Exception as err:
-              print('[]')
-          ")
-            echo "$parsed_data" > "data-$name.json"
-          done
+        async function fetchScores() {
+            const league = leagues[currentIdx];
+            document.getElementById('league-indicator').innerText = league.toUpperCase();
+            const container = document.getElementById('scoreboard-container');
 
-      - name: Commit and Save Data Changes
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add data-*.json
-          git diff-index --quiet HEAD || git commit -m "Automated scoreboard cache data update"
-          git push
+            try {
+                // Pulls safely from your own repository space, bypassing all ESPN blocks
+                const response = await fetch(`./data-${league}.json?cb=${new Date().getTime()}`);
+                if (!response.ok) throw new Error("File missing");
+                
+                const events = await response.json();
+                container.innerHTML = '';
+
+                if (events.length === 0) {
+                    container.innerHTML = `<div class="no-games">No active games found for ${league.toUpperCase()}.</div>`;
+                    return;
+                }
+
+                events.forEach(game => {
+                    const card = document.createElement('div');
+                    card.className = 'game-card';
+                    card.innerHTML = `
+                        <div class="status ${game.isLive ? 'live' : ''}">${game.isLive ? '● ' : ''}${game.status}</div>
+                        <div class="team-row">
+                            <div class="team-info">
+                                <img class="team-logo" src="${game.awayLogo}" alt="">
+                                <span class="team-name">${game.awayName}</span>
+                            </div>
+                            <span class="team-score">${game.awayScore}</span>
+                        </div>
+                        <div class="team-row">
+                            <div class="team-info">
+                                <img class="team-logo" src="${game.homeLogo}" alt="">
+                                <span class="team-name">${game.homeName}</span>
+                            </div>
+                            <span class="team-score">${game.homeScore}</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (e) {
+                container.innerHTML = `<div class="no-games">Data updating in background. Standby...</div>`;
+            }
+            currentIdx = (currentIdx + 1) % leagues.length;
+        }
+
+        fetchScores();
+        setInterval(fetchScores, 15000);
+    </script>
+</body>
+</html>
