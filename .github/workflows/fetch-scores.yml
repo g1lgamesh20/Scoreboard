@@ -1,0 +1,65 @@
+name: Fetch Sports Data
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Automatically runs and grabs scores every 5 minutes
+  workflow_dispatch: # Allows you to press a button to manually force a fetch
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Fetch and Process JSON Files
+        run: |
+          urls=(
+            "nfl|https://espn.com"
+            "nba|https://espn.com"
+            "mlb|https://espn.com"
+            "nhl|https://espn.com"
+            "ncaa|https://espn.com"
+          )
+          
+          for pair in "${urls[@]}"; do
+            IFS="|" read -r name url <<< "$pair"
+            echo "Fetching $name..."
+            raw_data=$(curl -s -L "$url")
+            
+            # Simple python parser script to structure data and strip out junk entries
+            parsed_data=$(python3 -c "
+          import json, sys
+          try:
+              data = json.loads('''$raw_data''')
+              out = []
+              for e in data.get('events', []):
+                  comp = e['competitions'][0]
+                  home = next(c for c in comp['competitors'] if c['side'] == 'home')
+                  away = next(c for c in comp['competitors'] if c['side'] == 'away')
+                  out.append({
+                      'status': e['status']['type']['detail'],
+                      'isLive': e['status']['type']['state'] == 'in',
+                      'homeName': home['team']['displayName'],
+                      'homeLogo': home['team'].get('logo', 'https://espncdn.com'),
+                      'homeScore': home.get('score', '0'),
+                      'awayName': away['team']['displayName'],
+                      'awayLogo': away['team'].get('logo', 'https://espncdn.com'),
+                      'awayScore': away.get('score', '0')
+                  })
+              print(json.dumps(out))
+          except Exception as err:
+              print('[]')
+          ")
+            echo "$parsed_data" > "data-$name.json"
+          done
+
+      - name: Commit and Save Data Changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add data-*.json
+          git diff-index --quiet HEAD || git commit -m "Automated scoreboard cache data update"
+          git push
