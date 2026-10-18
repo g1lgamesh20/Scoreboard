@@ -1,8 +1,8 @@
 name: Fetch Sports Data
 on:
   schedule:
-    - cron: '*/5 * * * *' # Automatically updates every 5 minutes
-  workflow_dispatch: # Allows you to press a button to manually force a fetch
+    - cron: '*/5 * * * *' # Updates automatically every 5 minutes
+  workflow_dispatch: # Allows manual force refreshes via the action panel
 
 permissions:
   contents: write
@@ -14,47 +14,8 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Fetch and Process JSON Files
-        run: |
-          urls=(
-            "nfl|https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
-            "nba|https://espn.com"
-            "mlb|https://espn.com"
-            "nhl|https://espn.com"
-            "ncaa|https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80"
-          )
-          
-          for pair in "${urls[@]}"; do
-            IFS="|" read -r name url <<< "$pair"
-            echo "Fetching $name..."
-            raw_data=$(curl -s -L "$url")
-            
-            # Updated Python script: Grabs ALL games (Final, Scheduled, and Live) to use as placeholders
-            parsed_data=$(python3 -c "
-          import json, sys
-          try:
-              data = json.loads('''$raw_data''')
-              out = []
-              for e in data.get('events', []):
-                  comp = e['competitions'][0]
-                  home = next(c for c in comp['competitors'] if c['side'] == 'home')
-                  away = next(c for c in comp['competitors'] if c['side'] == 'away')
-                  out.append({
-                      'status': e['status']['type']['detail'],
-                      'isLive': e['status']['type']['state'] == 'in',
-                      'homeName': home['team']['displayName'],
-                      'homeLogo': home['team'].get('logo', 'https://espncdn.com'),
-                      'homeScore': home.get('score', '0'),
-                      'awayName': away['team']['displayName'],
-                      'awayLogo': away['team'].get('logo', 'https://espncdn.com'),
-                      'awayScore': away.get('score', '0')
-                  })
-              print(json.dumps(out))
-          except Exception as err:
-              print('[]')
-          ")
-            echo "$parsed_data" > "data-$name.json"
-          done
+      - name: Run Data Collector Script
+        run: python3 process_scores.py
 
       - name: Commit and Save Data Changes
         run: |
