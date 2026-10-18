@@ -44,7 +44,7 @@
             { name: 'NBA', endpoint: 'basketball/nba' },
             { name: 'MLB', endpoint: 'baseball/mlb' },
             { name: 'NHL', endpoint: 'hockey/nhl' },
-            { name: 'NCAA Football', endpoint: 'football/college-football?groups=80' }
+            { name: 'NCAA Football', endpoint: 'football/college-football?groups=80&limit=100' }
         ];
         
         let currentIdx = 0;
@@ -60,30 +60,34 @@
             document.getElementById('league-indicator').innerText = league.name;
             const container = document.getElementById('scoreboard-container');
             
-            // Advance the index counter immediately
             currentIdx = (currentIdx + 1) % leagues.length;
 
             const targetUrl = `https://espn.com{league.endpoint}/scoreboard`;
             
-            // Using the ultra-reliable corsproxy.io direct format prefix
-            const proxyUrl = `https://corsproxy.io{encodeURIComponent(targetUrl)}`;
+            // AllOrigins JSON wrapper allows complete, public frontend script fetching
+            const proxyUrl = `https://allorigins.win{encodeURIComponent(targetUrl)}&_cb=${new Date().getTime()}`;
 
             try {
                 const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("CORS proxy failure");
+                if (!response.ok) throw new Error("Proxy network failure");
                 
-                const data = await response.json();
+                const wrapper = await response.json();
+                
+                // Parse out string object data fields
+                const data = typeof wrapper.contents === 'string' ? JSON.parse(wrapper.contents) : wrapper.contents;
                 const events = data.events || [];
 
                 container.innerHTML = '';
 
                 if (events.length === 0) {
-                    container.innerHTML = `<div class="no-games">No active games scheduled for ${league.name} today.</div>`;
+                    container.innerHTML = `<div class="no-games">No scheduled games found for ${league.name} today.</div>`;
                     return;
                 }
 
                 events.forEach(game => {
                     const comp = game.competitions[0];
+                    if (!comp) return;
+
                     const status = game.status.type.detail;
                     const isLive = game.status.type.state === 'in';
                     
@@ -113,7 +117,7 @@
                 });
             } catch (e) {
                 console.error(e);
-                container.innerHTML = `<div class="no-games">Awaiting server sync. Polling feeds...</div>`;
+                container.innerHTML = `<div class="no-games">Synchronizing network stream. Standing by...</div>`;
             }
         }
 
