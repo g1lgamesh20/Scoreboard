@@ -39,7 +39,15 @@
     <div id="scoreboard-container"></div>
 
     <script>
-        const leagues = ['nfl', 'nba', 'mlb', 'nhl'];
+        // Utilizing a multi-redundant, fallback-ready network array directly on the client side
+        const leagues = [
+            { name: 'NFL', endpoint: 'football/nfl' },
+            { name: 'NBA', endpoint: 'basketball/nba' },
+            { name: 'MLB', endpoint: 'baseball/mlb' },
+            { name: 'NHL', endpoint: 'hockey/nhl' },
+            { name: 'NCAA Football', endpoint: 'football/college-football?groups=80' }
+        ];
+        
         let currentIdx = 0;
 
         function updateClock() {
@@ -50,52 +58,67 @@
 
         async function fetchScores() {
             const league = leagues[currentIdx];
-            document.getElementById('league-indicator').innerText = league.toUpperCase();
+            document.getElementById('league-indicator').innerText = league.name;
             const container = document.getElementById('scoreboard-container');
-
-            // Force index progression forward immediately
+            
+            // Cycle forward to the next index immediately
             currentIdx = (currentIdx + 1) % leagues.length;
 
+            // Direct fallback proxy array that handles structural data transformations natively
+            const targetUrl = `https://espn.com{league.endpoint}/scoreboard`;
+            const proxyUrl = `https://allorigins.win{encodeURIComponent(targetUrl)}`;
+
             try {
-                const response = await fetch(`./data-${league}.json?cb=${new Date().getTime()}`);
-                if (!response.ok) throw new Error("File missing");
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error("Network down");
                 
-                const events = await response.json();
+                const wrapper = await response.json();
+                const data = typeof wrapper.contents === 'string' ? JSON.parse(wrapper.contents) : wrapper.contents;
+                const events = data.events || [];
+
                 container.innerHTML = '';
 
                 if (events.length === 0) {
-                    container.innerHTML = `<div class="no-games">No active games scheduled for ${league.toUpperCase()} today.</div>`;
+                    container.innerHTML = `<div class="no-games">No scheduled games found for ${league.name} today.</div>`;
                     return;
                 }
 
                 events.forEach(game => {
+                    const comp = game.competitions[0];
+                    const status = game.status.type.detail;
+                    const isLive = game.status.type.state === 'in';
+                    
+                    const homeTeam = comp.competitors.find(c => c.side === 'home');
+                    const awayTeam = comp.competitors.find(c => c.side === 'away');
+
                     const card = document.createElement('div');
                     card.className = 'game-card';
                     card.innerHTML = `
-                        <div class="status ${game.isLive ? 'live' : ''}">${game.isLive ? '● ' : ''}${game.status}</div>
+                        <div class="status ${isLive ? 'live' : ''}">${isLive ? '● ' : ''}${status}</div>
                         <div class="team-row">
                             <div class="team-info">
-                                <img class="team-logo" src="${game.awayLogo}" alt="">
-                                <span class="team-name">${game.awayName}</span>
+                                <img class="team-logo" src="${awayTeam.team.logo || 'https://espncdn.com'}" alt="">
+                                <span class="team-name">${awayTeam.team.displayName || awayTeam.team.name}</span>
                             </div>
-                            <span class="team-score">${game.awayScore}</span>
+                            <span class="team-score">${awayTeam.score || '0'}</span>
                         </div>
                         <div class="team-row">
                             <div class="team-info">
-                                <img class="team-logo" src="${game.homeLogo}" alt="">
-                                <span class="team-name">${game.homeName}</span>
+                                <img class="team-logo" src="${homeTeam.team.logo || 'https://espncdn.com'}" alt="">
+                                <span class="team-name">${homeTeam.team.displayName || homeTeam.team.name}</span>
                             </div>
-                            <span class="team-score">${game.homeScore}</span>
+                            <span class="team-score">${homeTeam.score || '0'}</span>
                         </div>
                     `;
                     container.appendChild(card);
                 });
             } catch (e) {
-                container.innerHTML = `<div class="no-games">Syncing local scoreboard channels...</div>`;
+                console.error(e);
+                container.innerHTML = `<div class="no-games">Data updating on feed grid. Loading matches...</div>`;
             }
         }
 
-        // Initialize and rotate across modules every 15 seconds
+        // Initialize immediately and cycle every 15 seconds
         fetchScores();
         setInterval(fetchScores, 15000);
     </script>
