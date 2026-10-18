@@ -118,13 +118,12 @@
     </header>
 
     <div id="scoreboard-container">
-        <!-- Games dynamically loaded here -->
+        <!-- Live game items map here -->
     </div>
 
     <script>
-        // Switched paths directly to open CDN data dumps which completely clear Github Pages browser blocks
         const leagues = [
-            { name: 'NFL', url: 'https://espn.com' },
+            { name: 'NFL', url: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard' },
             { name: 'NBA', url: 'https://espn.com' },
             { name: 'MLB', url: 'https://espn.com' },
             { name: 'NHL', url: 'https://espn.com' },
@@ -145,12 +144,16 @@
             document.getElementById('league-indicator').innerText = league.name;
             const container = document.getElementById('scoreboard-container');
 
+            // Using the robust AllOrigins programmatic decoder to bypass server domain security walls completely
+            const proxyUrl = `https://allorigins.win{encodeURIComponent(league.url)}`;
+
             try {
-                // cache-busting timestamp string appended so old tablets pull brand new information every cycle
-                const response = await fetch(`${league.url}&cb=${new Date().getTime()}`);
-                if (!response.ok) throw new Error("Data fetch block");
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error("Fetch failed");
                 
-                const data = await response.json();
+                const wrapper = await response.json();
+                // AllOrigins embeds the stringified contents inside a ".contents" property wrapper
+                const data = JSON.parse(wrapper.contents);
                 const events = data.events || [];
 
                 container.innerHTML = '';
@@ -192,8 +195,8 @@
                 });
 
             } catch (error) {
-                console.error("Error fetching scoreboard:", error);
-                container.innerHTML = '<div class="no-games">Error connection update. Sweeping leagues...</div>';
+                console.error("Scoreboard loop connection issue:", error);
+                container.innerHTML = '<div class="no-games">Connection issue. Checking next league layout...</div>';
             }
         }
 
