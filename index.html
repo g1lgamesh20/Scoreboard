@@ -118,11 +118,10 @@
     </header>
 
     <div id="scoreboard-container">
-        <!-- Live matches load dynamically here -->
+        <!-- Live matches populate here dynamically -->
     </div>
 
     <script>
-        // Switched to public, unblocked, direct core CDN configurations
         const leagues = [
             { name: 'NFL', url: 'https://espn.com' },
             { name: 'NBA', url: 'https://espn.com' },
@@ -140,80 +139,81 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        async function fetchScores() {
+        // 1. This global handler function receives the clean data directly from the script tag bypass
+        window.parseScores = function(data) {
+            const container = document.getElementById('scoreboard-container');
+            const events = data.events || [];
+            container.innerHTML = '';
+
+            // Clean up any old script tags left behind from prior loops
+            const oldScript = document.getElementById('jsonp-data-loader');
+            if (oldScript) oldScript.remove();
+
+            if (events.length === 0) {
+                const currentLeague = leagues[(currentLeagueIndex === 0 ? leagues.length : currentLeagueIndex) - 1];
+                container.innerHTML = `<div class="no-games">No active games scheduled for ${currentLeague.name} today.</div>`;
+                return;
+            }
+
+            events.forEach(game => {
+                const competition = game.competitions[0];
+                const status = game.status.type.detail;
+                const isLive = game.status.type.state === 'in';
+                
+                const homeTeam = competition.competitors.find(c => c.side === 'home');
+                const awayTeam = competition.competitors.find(c => c.side === 'away');
+
+                const card = document.createElement('div');
+                card.className = 'game-card';
+
+                card.innerHTML = `
+                    <div class="status ${isLive ? 'live' : ''}">${isLive ? '● ' : ''}${status}</div>
+                    <div class="team-row">
+                        <div class="team-info">
+                            <img class="team-logo" src="${awayTeam.team.logo || 'https://espncdn.com'}" alt="">
+                            <span class="team-name">${awayTeam.team.displayName}</span>
+                        </div>
+                        <span class="team-score">${awayTeam.score || '0'}</span>
+                    </div>
+                    <div class="team-row">
+                        <div class="team-info">
+                            <img class="team-logo" src="${homeTeam.team.logo || 'https://espncdn.com'}" alt="">
+                            <span class="team-name">${homeTeam.team.displayName}</span>
+                        </div>
+                        <span class="team-score">${homeTeam.score || '0'}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        // 2. Inject an active HTML script tag to fetch data from ESPN without triggering security blocks
+        function fetchScoresJsonp() {
             const league = leagues[currentLeagueIndex];
             document.getElementById('league-indicator').innerText = league.name;
-            const container = document.getElementById('scoreboard-container');
+            
+            // Generate a parameter divider based on existing query configuration details
+            const urlSeparator = league.url.includes('?') ? '&' : '?';
+            
+            // Build the unblocked script tag element mapping to our window parser function
+            const scriptTag = document.createElement('script');
+            scriptTag.id = 'jsonp-data-loader';
+            scriptTag.src = `${league.url}${urlSeparator}callback=parseScores&timestamp=${new Date().getTime()}`;
+            
+            // Add error handling in case the specific league network drop goes offline entirely
+            scriptTag.onerror = function() {
+                document.getElementById('scoreboard-container').innerHTML = '<div class="no-games">Data connection issue. Scanning next league...</div>';
+            };
 
-            try {
-                // Fetch directly from the CDN with no proxy middleman required
-                const response = await fetch(league.url);
-                if (!response.ok) throw new Error("CDN load failure");
-                
-                const data = await response.json();
-                
-                // CDN payload returns data inside a nested content structural wrapper
-                const contentData = data.content || {};
-                const events = contentData.events || [];
-
-                container.innerHTML = '';
-
-                if (events.length === 0) {
-                    container.innerHTML = `<div class="no-games">No active games scheduled for ${league.name} today.</div>`;
-                    return;
-                }
-
-                events.forEach(game => {
-                    const competition = game.competitions[0];
-                    const status = game.status.type.detail;
-                    const isLive = game.status.type.state === 'in';
-                    
-                    const homeTeam = competition.competitors.find(c => c.side === 'home');
-                    const awayTeam = competition.competitors.find(c => c.side === 'away');
-
-                    // Extract values gracefully with fallbacks to avoid layout crashes
-                    const homeName = homeTeam.team.displayName || homeTeam.team.name;
-                    const awayName = awayTeam.team.displayName || awayTeam.team.name;
-                    const homeLogo = homeTeam.team.logo || 'https://espncdn.com';
-                    const awayLogo = awayTeam.team.logo || 'https://espncdn.com';
-
-                    const card = document.createElement('div');
-                    card.className = 'game-card';
-
-                    card.innerHTML = `
-                        <div class="status ${isLive ? 'live' : ''}">${isLive ? '● ' : ''}${status}</div>
-                        <div class="team-row">
-                            <div class="team-info">
-                                <img class="team-logo" src="${awayLogo}" alt="">
-                                <span class="team-name">${awayName}</span>
-                            </div>
-                            <span class="team-score">${awayTeam.score || '0'}</span>
-                        </div>
-                        <div class="team-row">
-                            <div class="team-info">
-                                <img class="team-logo" src="${homeLogo}" alt="">
-                                <span class="team-name">${homeName}</span>
-                            </div>
-                            <span class="team-score">${homeTeam.score || '0'}</span>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-
-            } catch (error) {
-                console.error("Scoreboard loop connection issue:", error);
-                container.innerHTML = '<div class="no-games">Loading error. Scanning network feeds...</div>';
-            }
-        }
-
-        function cycleLeagues() {
-            fetchScores();
+            document.body.appendChild(scriptTag);
+            
+            // Increment the counter to switch leagues for the next interval cycle
             currentLeagueIndex = (currentLeagueIndex + 1) % leagues.length;
         }
 
-        // Initialize and rotate
-        cycleLeagues();
-        setInterval(cycleLeagues, 20000);
+        // Initialize immediately and cycle every 20 seconds
+        fetchScoresJsonp();
+        setInterval(fetchScoresJsonp, 20000);
     </script>
 </body>
 </html>
