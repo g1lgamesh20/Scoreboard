@@ -118,14 +118,14 @@
     </header>
 
     <div id="scoreboard-container">
-        <!-- Games will be injected here dynamically -->
+        <!-- Games dynamically loaded here -->
     </div>
 
     <script>
-        // Swapped base URL to site.web.api.espn.com which allows native browser fetching without proxies
+        // Switched paths directly to open CDN data dumps which completely clear Github Pages browser blocks
         const leagues = [
             { name: 'NFL', url: 'https://espn.com' },
-            { name: 'NBA', url: 'https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard' },
+            { name: 'NBA', url: 'https://espn.com' },
             { name: 'MLB', url: 'https://espn.com' },
             { name: 'NHL', url: 'https://espn.com' },
             { name: 'NCAA Football', url: 'https://espn.com' }
@@ -146,8 +146,9 @@
             const container = document.getElementById('scoreboard-container');
 
             try {
-                const response = await fetch(league.url);
-                if (!response.ok) throw new Error("Network issue");
+                // cache-busting timestamp string appended so old tablets pull brand new information every cycle
+                const response = await fetch(`${league.url}&cb=${new Date().getTime()}`);
+                if (!response.ok) throw new Error("Data fetch block");
                 
                 const data = await response.json();
                 const events = data.events || [];
@@ -191,8 +192,8 @@
                 });
 
             } catch (error) {
-                console.error("Error loading scores:", error);
-                container.innerHTML = '<div class="no-games">Error reading data. Retrying...</div>';
+                console.error("Error fetching scoreboard:", error);
+                container.innerHTML = '<div class="no-games">Error connection update. Sweeping leagues...</div>';
             }
         }
 
