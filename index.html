@@ -118,14 +118,14 @@
     </header>
 
     <div id="scoreboard-container">
-        <!-- Live game items map here -->
+        <!-- Live game elements injected here -->
     </div>
 
     <script>
         const leagues = [
             { name: 'NFL', url: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard' },
             { name: 'NBA', url: 'https://espn.com' },
-            { name: 'MLB', url: 'https://espn.com' },
+            { name: 'MLB', url: 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard' },
             { name: 'NHL', url: 'https://espn.com' },
             { name: 'NCAA Football', url: 'https://espn.com' }
         ];
@@ -144,22 +144,23 @@
             document.getElementById('league-indicator').innerText = league.name;
             const container = document.getElementById('scoreboard-container');
 
-            // Using the robust AllOrigins programmatic decoder to bypass server domain security walls completely
+            // Routing requests through a proxy with custom headers to prevent browser cors denial blocks
             const proxyUrl = `https://allorigins.win{encodeURIComponent(league.url)}`;
 
             try {
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Fetch failed");
+                const response = await fetch(proxyUrl, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!response.ok) throw new Error("Data fetch block");
                 
                 const wrapper = await response.json();
-                // AllOrigins embeds the stringified contents inside a ".contents" property wrapper
                 const data = JSON.parse(wrapper.contents);
                 const events = data.events || [];
 
                 container.innerHTML = '';
 
                 if (events.length === 0) {
-                    container.innerHTML = `<div class="no-games">No games scheduled for ${league.name} today.</div>`;
+                    container.innerHTML = `<div class="no-games">No active games scheduled for ${league.name} today.</div>`;
                     return;
                 }
 
