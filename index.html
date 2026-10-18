@@ -1,219 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sports Scoreboard</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        header {
-            background-color: #1a1a1a;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #ff3333;
-        }
-        h1 {
-            font-size: 1.8rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #ffffff;
-        }
-        #league-indicator {
-            color: #ff3333;
-            font-weight: bold;
-        }
-        #clock {
-            font-size: 1.5rem;
-            font-family: monospace;
-            background: #000000;
-            padding: 5px 15px;
-            border-radius: 4px;
-            border: 1px solid #333;
-        }
-        #scoreboard-container {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
-            padding: 20px;
-            overflow-y: auto;
-            align-content: start;
-        }
-        .game-card {
-            background-color: #1e1e1e;
-            border-radius: 8px;
-            padding: 15px;
-            border: 1px solid #2d2d2d;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 140px;
-        }
-        .status {
-            font-size: 0.85rem;
-            color: #aaaaaa;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
-        .status.live {
-            color: #ff3333;
-        }
-        .team-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin: 8px 0;
-        }
-        .team-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .team-logo {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.65));
-        }
-        .team-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-        .team-score {
-            font-size: 1.6rem;
-            font-weight: bold;
-            font-family: monospace;
-        }
-        .no-games {
-            grid-column: 1 / -1;
-            text-align: center;
-            font-size: 1.2rem;
-            color: #888;
-            margin-top: 40px;
-        }
-    </style>
-</head>
-<body>
+name: Fetch Sports Data
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Automatically runs and grabs scores every 5 minutes
+  workflow_dispatch: # Allows you to press a button to manually force a fetch
 
-    <header>
-        <h1>Live Scores: <span id="league-indicator">Loading...</span></h1>
-        <div id="clock">00:00:00 AM</div>
-    </header>
+permissions:
+  contents: write
 
-    <div id="scoreboard-container">
-        <!-- Live matches populate here dynamically -->
-    </div>
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-    <script>
-        const leagues = [
-            { name: 'NFL', url: 'https://espn.com' },
-            { name: 'NBA', url: 'https://espn.com' },
-            { name: 'MLB', url: 'https://espn.com' },
-            { name: 'NHL', url: 'https://espn.com' },
-            { name: 'NCAA Football', url: 'https://espn.com' }
-        ];
-
-        let currentLeagueIndex = 0;
-
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString();
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // 1. This global handler function receives the clean data directly from the script tag bypass
-        window.parseScores = function(data) {
-            const container = document.getElementById('scoreboard-container');
-            const events = data.events || [];
-            container.innerHTML = '';
-
-            // Clean up any old script tags left behind from prior loops
-            const oldScript = document.getElementById('jsonp-data-loader');
-            if (oldScript) oldScript.remove();
-
-            if (events.length === 0) {
-                const currentLeague = leagues[(currentLeagueIndex === 0 ? leagues.length : currentLeagueIndex) - 1];
-                container.innerHTML = `<div class="no-games">No active games scheduled for ${currentLeague.name} today.</div>`;
-                return;
-            }
-
-            events.forEach(game => {
-                const competition = game.competitions[0];
-                const status = game.status.type.detail;
-                const isLive = game.status.type.state === 'in';
-                
-                const homeTeam = competition.competitors.find(c => c.side === 'home');
-                const awayTeam = competition.competitors.find(c => c.side === 'away');
-
-                const card = document.createElement('div');
-                card.className = 'game-card';
-
-                card.innerHTML = `
-                    <div class="status ${isLive ? 'live' : ''}">${isLive ? '● ' : ''}${status}</div>
-                    <div class="team-row">
-                        <div class="team-info">
-                            <img class="team-logo" src="${awayTeam.team.logo || 'https://espncdn.com'}" alt="">
-                            <span class="team-name">${awayTeam.team.displayName}</span>
-                        </div>
-                        <span class="team-score">${awayTeam.score || '0'}</span>
-                    </div>
-                    <div class="team-row">
-                        <div class="team-info">
-                            <img class="team-logo" src="${homeTeam.team.logo || 'https://espncdn.com'}" alt="">
-                            <span class="team-name">${homeTeam.team.displayName}</span>
-                        </div>
-                        <span class="team-score">${homeTeam.score || '0'}</span>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        };
-
-        // 2. Inject an active HTML script tag to fetch data from ESPN without triggering security blocks
-        function fetchScoresJsonp() {
-            const league = leagues[currentLeagueIndex];
-            document.getElementById('league-indicator').innerText = league.name;
+      - name: Fetch and Process JSON Files
+        run: |
+          urls=(
+            "nfl|https://espn.com"
+            "nba|https://espn.com"
+            "mlb|https://espn.com"
+            "nhl|https://espn.com"
+            "ncaa|https://espn.com"
+          )
+          
+          for pair in "${urls[@]}"; do
+            IFS="|" read -r name url <<< "$pair"
+            echo "Fetching $name..."
+            raw_data=$(curl -s -L "$url")
             
-            // Generate a parameter divider based on existing query configuration details
-            const urlSeparator = league.url.includes('?') ? '&' : '?';
-            
-            // Build the unblocked script tag element mapping to our window parser function
-            const scriptTag = document.createElement('script');
-            scriptTag.id = 'jsonp-data-loader';
-            scriptTag.src = `${league.url}${urlSeparator}callback=parseScores&timestamp=${new Date().getTime()}`;
-            
-            // Add error handling in case the specific league network drop goes offline entirely
-            scriptTag.onerror = function() {
-                document.getElementById('scoreboard-container').innerHTML = '<div class="no-games">Data connection issue. Scanning next league...</div>';
-            };
+            # Simple python parser script to structure data and strip out junk entries
+            parsed_data=$(python3 -c "
+          import json, sys
+          try:
+              data = json.loads('''$raw_data''')
+              out = []
+              for e in data.get('events', []):
+                  comp = e['competitions'][0]
+                  home = next(c for c in comp['competitors'] if c['side'] == 'home')
+                  away = next(c for c in comp['competitors'] if c['side'] == 'away')
+                  out.append({
+                      'status': e['status']['type']['detail'],
+                      'isLive': e['status']['type']['state'] == 'in',
+                      'homeName': home['team']['displayName'],
+                      'homeLogo': home['team'].get('logo', 'https://espncdn.com'),
+                      'homeScore': home.get('score', '0'),
+                      'awayName': away['team']['displayName'],
+                      'awayLogo': away['team'].get('logo', 'https://espncdn.com'),
+                      'awayScore': away.get('score', '0')
+                  })
+              print(json.dumps(out))
+          except Exception as err:
+              print('[]')
+          ")
+            echo "$parsed_data" > "data-$name.json"
+          done
 
-            document.body.appendChild(scriptTag);
-            
-            // Increment the counter to switch leagues for the next interval cycle
-            currentLeagueIndex = (currentLeagueIndex + 1) % leagues.length;
-        }
-
-        // Initialize immediately and cycle every 20 seconds
-        fetchScoresJsonp();
-        setInterval(fetchScoresJsonp, 20000);
-    </script>
-</body>
-</html>
+      - name: Commit and Save Data Changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add data-*.json
+          git diff-index --quiet HEAD || git commit -m "Automated scoreboard cache data update"
+          git push
