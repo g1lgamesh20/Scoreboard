@@ -3,9 +3,9 @@ import json
 import urllib.request
 
 urls = {
-    "nfl": "https://espn.com",
-    "nba": "https://espn.com",
-    "mlb": "https://espn.com",
+    "nfl": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+    "nba": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard",
+    "mlb": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard",
     "nhl": "https://espn.com",
     "ncaa": "https://espn.com"
 }
@@ -19,18 +19,19 @@ for name, url in urls.items():
             
         out = []
         for e in data.get('events', []):
-            # FIXED: ESPN packages competitions as a list, so we grab the first element [0]
             competitions = e.get('competitions', [])
             if not competitions:
                 continue
                 
+            # Safely grab the first competition configuration object
             comp = competitions[0]
             competitors = comp.get('competitors', [])
             if len(competitors) < 2:
                 continue
                 
-            home = next((c for c in competitors if c.side == 'home'), competitors[0])
-            away = next((c for c in competitors if c.side == 'away'), competitors[1])
+            # FIXED: Changed from .side to ['side'] so python processes the dictionary keys cleanly
+            home = next((c for c in competitors if c['side'] == 'home'), competitors[0])
+            away = next((c for c in competitors if c['side'] == 'away'), competitors[1])
             
             out.append({
                 'status': e['status']['type']['detail'],
@@ -45,9 +46,9 @@ for name, url in urls.items():
             
         with open(f"data-{name}.json", "w") as outfile:
             json.dump(out, outfile)
-        print(f"Successfully wrote data-{name}.json with {len(out)} games.")
+        print(f"Successfully wrote data-{name}.json with {len(out)} matches.")
             
     except Exception as err:
-        print(f"Error handling {name}: {err}")
+        print(f"Critical error mapping {name}: {err}")
         with open(f"data-{name}.json", "w") as outfile:
             json.dump([], outfile)
