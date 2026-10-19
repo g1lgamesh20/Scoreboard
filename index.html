@@ -44,7 +44,7 @@
             { name: 'NBA', endpoint: 'basketball/nba' },
             { name: 'MLB', endpoint: 'baseball/mlb' },
             { name: 'NHL', endpoint: 'hockey/nhl' },
-            { name: 'NCAA Football', endpoint: 'football/college-football?groups=80&limit=100' }
+            { name: 'NCAA Football', endpoint: 'football/college-football?groups=80' }
         ];
         
         let currentIdx = 0;
@@ -62,19 +62,15 @@
             
             currentIdx = (currentIdx + 1) % leagues.length;
 
-            const targetUrl = `https://espn.com{league.endpoint}/scoreboard`;
-            
-            // AllOrigins JSON wrapper allows complete, public frontend script fetching
-            const proxyUrl = `https://allorigins.win{encodeURIComponent(targetUrl)}&_cb=${new Date().getTime()}`;
+            // Notice the changed domain: site.web.api.espn.com - this is an open mobile endpoint
+            const targetUrl = `https://espn.com{league.endpoint}/scoreboard?_cb=${new Date().getTime()}`;
 
             try {
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error("Proxy network failure");
+                // Fetch directly with zero proxies or middlemen
+                const response = await fetch(targetUrl);
+                if (!response.ok) throw new Error("API direct connection drop");
                 
-                const wrapper = await response.json();
-                
-                // Parse out string object data fields
-                const data = typeof wrapper.contents === 'string' ? JSON.parse(wrapper.contents) : wrapper.contents;
+                const data = await response.json();
                 const events = data.events || [];
 
                 container.innerHTML = '';
@@ -85,14 +81,14 @@
                 }
 
                 events.forEach(game => {
-                    const comp = game.competitions[0];
-                    if (!comp) return;
+                    const comp = game.competitions;
+                    if (!comp || !comp[0]) return;
 
                     const status = game.status.type.detail;
                     const isLive = game.status.type.state === 'in';
                     
-                    const homeTeam = comp.competitors.find(c => c.side === 'home');
-                    const awayTeam = comp.competitors.find(c => c.side === 'away');
+                    const homeTeam = comp[0].competitors.find(c => c.side === 'home');
+                    const awayTeam = comp[0].competitors.find(c => c.side === 'away');
 
                     const card = document.createElement('div');
                     card.className = 'game-card';
@@ -117,7 +113,7 @@
                 });
             } catch (e) {
                 console.error(e);
-                container.innerHTML = `<div class="no-games">Synchronizing network stream. Standing by...</div>`;
+                container.innerHTML = `<div class="no-games">Direct feed connecting...</div>`;
             }
         }
 
