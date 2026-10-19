@@ -62,13 +62,11 @@
             
             currentIdx = (currentIdx + 1) % leagues.length;
 
-            // Notice the changed domain: site.web.api.espn.com - this is an open mobile endpoint
             const targetUrl = `https://espn.com{league.endpoint}/scoreboard?_cb=${new Date().getTime()}`;
 
             try {
-                // Fetch directly with zero proxies or middlemen
                 const response = await fetch(targetUrl);
-                if (!response.ok) throw new Error("API direct connection drop");
+                if (!response.ok) throw new Error("Connection drop");
                 
                 const data = await response.json();
                 const events = data.events || [];
@@ -76,19 +74,19 @@
                 container.innerHTML = '';
 
                 if (events.length === 0) {
-                    container.innerHTML = `<div class="no-games">No scheduled games found for ${league.name} today.</div>`;
+                    container.innerHTML = `<div class="no-games">No active games scheduled for ${league.name} today.</div>`;
                     return;
                 }
 
                 events.forEach(game => {
-                    const comp = game.competitions;
-                    if (!comp || !comp[0]) return;
+                    const comp = game.competitions[0];
+                    if (!comp) return;
 
                     const status = game.status.type.detail;
                     const isLive = game.status.type.state === 'in';
                     
-                    const homeTeam = comp[0].competitors.find(c => c.side === 'home');
-                    const awayTeam = comp[0].competitors.find(c => c.side === 'away');
+                    const homeTeam = comp.competitors.find(c => c.side === 'home');
+                    const awayTeam = comp.competitors.find(c => c.side === 'away');
 
                     const card = document.createElement('div');
                     card.className = 'game-card';
@@ -117,7 +115,6 @@
             }
         }
 
-        // Initialize immediately and cycle every 15 seconds
         fetchScores();
         setInterval(fetchScores, 15000);
     </script>
