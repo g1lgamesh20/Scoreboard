@@ -1,19 +1,19 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#05070a">
-<title>Continual Sports Jumbotron</title>
+<title>Sports Central Jumbotron</title>
 
 <style>
 :root {
   --bg: #05070a;
-  --panel: #101722;
+  --panel: #111b29;
   --blue: #00bfff;
   --green: #39ff88;
-  --red: #ff3838;
+  --red: #f12635;
   --gold: #ffc857;
   --text: #f5f8ff;
   --muted: #8b9bb0;
@@ -21,101 +21,105 @@
 
 * { box-sizing: border-box; }
 
-body {
+html, body {
   margin: 0;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
+}
+
+body {
   background: var(--bg);
   color: var(--text);
-  font-family: "Arial", "Segoe UI", sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 header {
   flex: 0 0 auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 14px 24px;
-  background: linear-gradient(90deg, #101c30, #070a10);
+  padding: 9px 20px;
+  background: linear-gradient(100deg, #12243a, #070a10);
   border-bottom: 3px solid var(--blue);
 }
 
 h1 {
-  font-size: clamp(19px, 2.3vw, 34px);
   margin: 0;
-  letter-spacing: 3px;
+  font-size: clamp(18px, 2.2vw, 32px);
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 
 #clock {
-  font-family: Consolas, monospace;
-  font-size: clamp(17px, 2vw, 29px);
   color: var(--green);
+  font: bold clamp(17px, 2vw, 28px) Consolas, monospace;
   white-space: nowrap;
 }
 
 #toolbar {
   flex: 0 0 auto;
+  min-height: 32px;
+  padding: 4px 15px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  padding: 8px 22px;
+  justify-content: space-between;
+  gap: 8px;
   background: #080d15;
-  border-bottom: 1px solid #1b2b3c;
+  border-bottom: 1px solid #203145;
 }
 
 #message {
   color: var(--muted);
-  font-size: 13px;
+  font-size: clamp(10px, 1vw, 13px);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
 button {
-  color: var(--text);
-  background: #17273b;
+  color: white;
+  background: #172b40;
   border: 1px solid #36516d;
-  border-radius: 5px;
-  padding: 8px 12px;
-  cursor: pointer;
+  border-radius: 4px;
+  padding: 5px 10px;
   font-weight: bold;
+  cursor: pointer;
 }
 
-button:hover { background: #244362; }
-
 #scoreboard {
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
-  padding: 14px;
+  padding: 9px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 9px;
 }
 
 .game {
-  min-width: 0;
+  position: relative;
   min-height: 0;
-  background: linear-gradient(145deg, #141e2c, #080d14);
-  border: 1px solid #26384b;
-  border-radius: 8px;
-  padding: 12px 15px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 10px 13px;
+  border-radius: 7px;
+  border: 1px solid #263b51;
+  background: linear-gradient(145deg, #152337, #080d14);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: space-evenly;
   box-shadow: inset 0 0 20px #0005;
-  position: relative;
-  overflow: hidden;
 }
 
 .game.live {
-  border: 1px solid var(--green);
-  box-shadow: inset 0 0 20px #39ff880b, 0 0 7px #39ff8822;
+  border-color: #248b5c;
+  box-shadow: inset 0 0 18px #39ff8809;
 }
 
 .game.live::before {
@@ -130,38 +134,41 @@ button:hover { background: #244362; }
 
 .game-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  font-size: clamp(11px, 1vw, 15px);
+  justify-content: space-between;
+  gap: 6px;
   color: var(--muted);
-  text-transform: uppercase;
+  font-size: clamp(10px, 1vw, 14px);
   font-weight: bold;
+  text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .status-live { color: var(--green); }
 .status-final { color: var(--gold); }
+.pulse { animation: pulse 1.8s infinite; }
 
 .team {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  margin: 5px 0;
+  margin: 4px 0;
 }
 
 .logo {
-  width: clamp(30px, 4vw, 52px);
-  height: clamp(30px, 4vw, 52px);
+  display: block;
+  width: clamp(30px, 4vw, 54px);
+  height: clamp(30px, 4vw, 54px);
+  flex: 0 0 auto;
   object-fit: contain;
-  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px #ffffff25);
 }
 
 .team-name {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
-  font-size: clamp(14px, 1.55vw, 23px);
+  font-size: clamp(14px, 1.65vw, 24px);
   font-weight: 800;
   line-height: 1.15;
   overflow: hidden;
@@ -170,21 +177,22 @@ button:hover { background: #244362; }
 }
 
 .score {
-  font-family: Consolas, monospace;
-  font-size: clamp(25px, 3.3vw, 46px);
-  font-weight: 900;
-  min-width: 42px;
+  flex: 0 0 auto;
+  min-width: 40px;
   text-align: right;
-  color: white;
+  font: 900 clamp(28px, 3.4vw, 48px) Consolas, monospace;
+  color: #fff;
+  text-shadow: 0 0 12px #00bfff22;
 }
 
-.live .score {
-  text-shadow: 0 0 12px #00bfff33;
+.game.live .score {
+  color: #fff;
+  text-shadow: 0 0 12px #00bfff55;
 }
 
 .game-footer {
-  font-size: 11px;
   color: #71859b;
+  font-size: clamp(9px, .85vw, 11px);
   text-align: right;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -195,83 +203,152 @@ button:hover { background: #244362; }
   grid-row: 1 / -1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  gap: 12px;
   text-align: center;
-  gap: 15px;
-  background: radial-gradient(ellipse, #10243b 0%, #05070a 72%);
+  background: radial-gradient(ellipse, #10243b, #05070a 75%);
 }
 
 #empty h2 {
-  font-size: clamp(25px, 4vw, 52px);
   margin: 0;
-  letter-spacing: 5px;
   color: var(--blue);
-  text-shadow: 0 0 20px #00bfff55;
+  font-size: clamp(24px, 4vw, 52px);
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px #00bfff44;
+}
+
+#idle-clock {
+  color: var(--green);
+  font: 900 clamp(34px, 6vw, 76px) Consolas, monospace;
 }
 
 #empty p {
+  margin: 0;
   color: var(--muted);
   letter-spacing: 2px;
   text-transform: uppercase;
 }
 
-#empty .big-clock {
-  font: 900 clamp(36px, 7vw, 90px) Consolas, monospace;
-  color: var(--green);
-}
+/* Broadcast ticker */
 
 footer {
-  flex: 0 0 auto;
-  padding: 7px 15px;
-  background: #080d15;
-  border-top: 1px solid #203145;
+  flex: 0 0 36px;
+  height: 36px;
+  min-width: 0;
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  color: var(--muted);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-#ticker {
+  align-items: stretch;
   overflow: hidden;
+  background: #080d15;
+  border-top: 2px solid var(--blue);
+}
+
+.ticker-label {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--red);
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
   white-space: nowrap;
-  flex: 1;
-  text-align: center;
 }
 
-@media (max-width: 800px) {
-  header { padding: 10px 14px; }
-  #scoreboard {
-    padding: 7px;
-    gap: 7px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(3, minmax(0, 1fr));
-  }
-  .game { padding: 8px; }
-  .team { gap: 5px; }
-  .logo { width: 28px; height: 28px; }
-  .team-name { font-size: 14px; }
-  .score { font-size: 24px; min-width: 28px; }
+#ticker-window {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 
-@media (max-height: 480px) {
-  header { padding: 5px 14px; }
-  #toolbar { padding: 4px 12px; }
-  #scoreboard { padding: 6px; gap: 6px; }
-  .game { padding: 6px 10px; }
-  .logo { width: 25px; height: 25px; }
-  .team { margin: 2px 0; }
-  footer { padding: 4px 10px; }
+#ticker-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  flex: 0 0 auto;
+  animation: ticker-scroll 60s linear infinite;
+  will-change: transform;
+}
+
+#ticker-track:hover {
+  animation-play-state: paused;
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  font: bold 12px Consolas, monospace;
+  white-space: nowrap;
+}
+
+.ticker-league { color: var(--blue); }
+.ticker-live { color: var(--green); }
+.ticker-final { color: var(--gold); }
+.ticker-score { color: white; }
+.ticker-separator { color: #52677e; padding-left: 8px; }
+
+#updated {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  color: var(--muted);
+  background: #080d15;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: .55; }
+  50% { opacity: .58; }
 }
-.pulse { animation: pulse 1.8s infinite; }
+
+/* Short screens: only two large cards at a time */
+
+@media (max-height: 520px) {
+  header { padding: 4px 12px; }
+  h1 { font-size: 18px; letter-spacing: 1px; }
+  #clock { font-size: 17px; }
+  #toolbar { min-height: 27px; padding: 2px 9px; }
+  button { padding: 3px 7px; font-size: 11px; }
+  #scoreboard { padding: 5px; gap: 5px; }
+  .game { padding: 5px 9px; }
+  .team { gap: 6px; margin: 2px 0; }
+  .logo { width: 27px; height: 27px; }
+  .team-name { font-size: clamp(13px, 2vw, 20px); }
+  .score { font-size: clamp(24px, 3.3vw, 36px); }
+  .game-header { font-size: 10px; }
+  .game-footer { font-size: 9px; }
+  footer { flex-basis: 30px; height: 30px; }
+  .ticker-label { padding: 0 8px; font-size: 10px; }
+  .ticker-item { padding: 0 10px; font-size: 11px; }
+  #updated { padding: 0 5px; font-size: 9px; }
+}
+
+@media (max-width: 520px) {
+  header { padding: 8px; }
+  h1 { font-size: 15px; letter-spacing: 1px; }
+  #clock { font-size: 15px; }
+  #scoreboard { padding: 5px; gap: 5px; }
+  .game { padding: 6px; }
+  .team { gap: 4px; }
+  .logo { width: 25px; height: 25px; }
+  .team-name { font-size: 12px; }
+  .score { min-width: 26px; font-size: 22px; }
+  .ticker-label { padding: 0 6px; font-size: 9px; }
+  #updated { display: none; }
+}
 </style>
 </head>
 
@@ -282,22 +359,26 @@ footer {
 </header>
 
 <div id="toolbar">
-  <div id="message">Connecting to scoreboard...</div>
-  <button id="fullscreen">⛶ Fullscreen</button>
+  <div id="message">Connecting to sports feeds...</div>
+  <button id="fullscreen">⛶ FULLSCREEN</button>
 </div>
 
 <main id="scoreboard">
   <div id="empty">
     <h2>SPORTS CENTRAL</h2>
-    <div class="big-clock" id="idle-clock">--:--</div>
+    <div id="idle-clock">--:--</div>
     <p>Connecting to live scores...</p>
   </div>
 </main>
 
 <footer>
-  <span>LIVE SPORTS</span>
-  <div id="ticker">NFL • NCAA FOOTBALL • MLB • NBA • NHL</div>
-  <span id="updated">Starting...</span>
+  <div class="ticker-label">SCORE CENTER</div>
+  <div id="ticker-window">
+    <div id="ticker-track">
+      <span class="ticker-item">CONNECTING TO LIVE SCORES...</span>
+    </div>
+  </div>
+  <div id="updated">STARTING</div>
 </footer>
 
 <script>
@@ -316,17 +397,23 @@ const leagues = [
 const board = document.getElementById("scoreboard");
 const message = document.getElementById("message");
 const updated = document.getElementById("updated");
+const tickerTrack = document.getElementById("ticker-track");
 
+let displayedGames = [];
 let recentGames = [];
+let gamePage = 0;
 let recentPage = 0;
 let displayMode = "idle";
+let tickerSignature = "";
 let refreshing = false;
+let lastGoodDataTime = 0;
 
 function localDate(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}${m}${d}`;
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("");
 }
 
 function dateOffset(days) {
@@ -340,8 +427,9 @@ function isMarchMadnessWindow() {
   const month = now.getMonth();
   const day = now.getDate();
 
-  // Approximate men's tournament window. Adjust if needed.
-  return (month === 2 && day >= 15) || (month === 3 && day <= 10);
+  // Approximate tournament window; adjust to official dates if desired.
+  return (month === 2 && day >= 15) ||
+         (month === 3 && day <= 10);
 }
 
 function enabledLeagues() {
@@ -358,31 +446,25 @@ function enabledLeagues() {
 }
 
 function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#39;"
-  })[char]);
+  })[ch]);
 }
 
 async function getScoreboard(league, date = null) {
-  let path = league.path;
-  let query = "";
+  const parts = league.path.split("?");
+  const path = parts[0];
+  const params = new URLSearchParams(parts[1] || "");
 
-  if (path.includes("?")) {
-    const parts = path.split("?");
-    path = parts[0];
-    query = parts[1];
-  }
-
-  const params = new URLSearchParams(query);
   if (date) params.set("dates", date);
 
   const url = `${API}/${path}/scoreboard?${params.toString()}`;
-
   const response = await fetch(url, { cache: "no-store" });
+
   if (!response.ok) {
     throw new Error(`${league.name}: HTTP ${response.status}`);
   }
@@ -394,32 +476,32 @@ function gameInfo(event, leagueName) {
   const comp = event.competitions?.[0];
   if (!comp) return null;
 
-  const teams = comp.competitors || [];
-  const away = teams.find(t => t.homeAway === "away");
-  const home = teams.find(t => t.homeAway === "home");
+  const competitors = comp.competitors || [];
+  const away = competitors.find(t => t.homeAway === "away");
+  const home = competitors.find(t => t.homeAway === "home");
 
   if (!away || !home) return null;
 
-  const statusType = event.status?.type || comp.status?.type || {};
-  const state = statusType.state || (
-    statusType.completed ? "post" : "pre"
-  );
+  const statusType = event.status?.type ||
+                     comp.status?.type || {};
+
+  const state = statusType.state ||
+    (statusType.completed ? "post" : "pre");
 
   const isLive = state === "in";
-  const isFinal = state === "post" || statusType.completed === true;
+  const isFinal = state === "post" ||
+                  statusType.completed === true;
 
   const status = isLive
     ? (event.status?.type?.shortDetail ||
-       event.status?.type?.detail ||
-       "LIVE")
+       event.status?.type?.detail || "LIVE")
     : isFinal
       ? "FINAL"
       : (event.status?.type?.shortDetail ||
-         event.status?.type?.detail ||
-         "UPCOMING");
+         event.status?.type?.detail || "UPCOMING");
 
   return {
-    id: event.id,
+    id: `${leagueName}-${event.id}`,
     league: leagueName,
     date: event.date,
     isLive,
@@ -427,44 +509,57 @@ function gameInfo(event, leagueName) {
     status,
     away,
     home,
-    eventName: event.name || "",
     venue: comp.venue?.fullName || ""
   };
 }
 
 function isToday(game) {
-  if (!game.date) return false;
-  return localDate(new Date(game.date)) === localDate();
+  return !!game.date &&
+    localDate(new Date(game.date)) === localDate();
 }
 
 function sortGames(games) {
   return games.sort((a, b) => {
-    // Live games first, then upcoming, then completed.
     const rank = g => g.isLive ? 0 : g.isFinal ? 2 : 1;
-    const diff = rank(a) - rank(b);
-    if (diff !== 0) return diff;
+    const rankDiff = rank(a) - rank(b);
+
+    if (rankDiff) return rankDiff;
+
+    if (a.isLive && b.isLive) {
+      return new Date(b.date) - new Date(a.date);
+    }
 
     return new Date(a.date || 0) - new Date(b.date || 0);
   });
+}
+
+function teamDisplayName(team) {
+  return team?.team?.displayName ||
+         team?.team?.shortDisplayName ||
+         team?.team?.name || "Unknown";
+}
+
+function teamShortName(team) {
+  return team?.team?.abbreviation ||
+         team?.team?.shortDisplayName ||
+         team?.team?.name || "TEAM";
+}
+
+function teamLogo(team) {
+  return team?.team?.logo || "";
 }
 
 function renderGame(game) {
   const away = game.away;
   const home = game.home;
 
-  const awayTeam = away.team || {};
-  const homeTeam = home.team || {};
-
-  const awayName = awayTeam.abbreviation ||
-    awayTeam.shortDisplayName || awayTeam.displayName || "AWAY";
-  const homeName = homeTeam.abbreviation ||
-    homeTeam.shortDisplayName || homeTeam.displayName || "HOME";
+  const awayName = teamDisplayName(away);
+  const homeName = teamDisplayName(home);
+  const awayLogo = teamLogo(away);
+  const homeLogo = teamLogo(home);
 
   const awayScore = away.score ?? "–";
   const homeScore = home.score ?? "–";
-
-  const awayLogo = awayTeam.logo || "";
-  const homeLogo = homeTeam.logo || "";
 
   const statusClass = game.isLive
     ? "status-live pulse"
@@ -474,12 +569,19 @@ function renderGame(game) {
     ? `● ${game.status}`
     : game.status;
 
-  const when = game.date
-    ? new Date(game.date).toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit"
-      })
-    : "";
+  let footerText = "";
+
+  if (game.isLive) {
+    footerText = game.status;
+  } else if (game.isFinal) {
+    footerText = "COMPLETED";
+  } else if (game.date) {
+    footerText = new Date(game.date).toLocaleString([], {
+      weekday: "short",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+  }
 
   return `
     <article class="game ${game.isLive ? "live" : ""}">
@@ -491,10 +593,12 @@ function renderGame(game) {
       <div>
         <div class="team">
           ${awayLogo
-            ? `<img class="logo" src="${escapeHTML(awayLogo)}" alt=""
-                    onerror="this.style.display='none'">`
+            ? `<img class="logo"
+                    src="${escapeHTML(awayLogo)}"
+                    alt="${escapeHTML(awayName)} logo"
+                    onerror="this.style.visibility='hidden'">`
             : ""}
-          <span class="team-name" title="${escapeHTML(awayTeam.displayName || awayName)}">
+          <span class="team-name" title="${escapeHTML(awayName)}">
             ${escapeHTML(awayName)}
           </span>
           <span class="score">${escapeHTML(awayScore)}</span>
@@ -502,164 +606,118 @@ function renderGame(game) {
 
         <div class="team">
           ${homeLogo
-            ? `<img class="logo" src="${escapeHTML(homeLogo)}" alt=""
-                    onerror="this.style.display='none'">`
+            ? `<img class="logo"
+                    src="${escapeHTML(homeLogo)}"
+                    alt="${escapeHTML(homeName)} logo"
+                    onerror="this.style.visibility='hidden'">`
             : ""}
-          <span class="team-name" title="${escapeHTML(homeTeam.displayName || homeName)}">
+          <span class="team-name" title="${escapeHTML(homeName)}">
             ${escapeHTML(homeName)}
           </span>
           <span class="score">${escapeHTML(homeScore)}</span>
         </div>
       </div>
 
-      <div class="game-footer">
-        ${game.isFinal ? "COMPLETED" : game.isLive ? "IN PROGRESS" : escapeHTML(when)}
-      </div>
+      <div class="game-footer">${escapeHTML(footerText)}</div>
     </article>`;
+}
+
+function pageSize() {
+  // Two large cards on short displays, four on taller displays.
+  return window.innerHeight <= 520 ? 2 : 4;
 }
 
 function renderIdle(title, subtitle) {
   board.innerHTML = `
     <div id="empty">
       <h2>${escapeHTML(title)}</h2>
-      <div class="big-clock" id="idle-clock">--:--</div>
+      <div id="idle-clock">--:--</div>
       <p>${escapeHTML(subtitle)}</p>
     </div>`;
+
   displayMode = "idle";
 }
 
-function renderGames(games, mode) {
-  if (!games.length) {
-    renderIdle("SPORTS CENTRAL", "No games found. Checking again soon.");
-    return;
-  }
-
-  const pageSize = 6;
-  let visibleGames = games;
-
-  if (mode === "recent" && games.length > pageSize) {
-    const pages = Math.ceil(games.length / pageSize);
-    recentPage = recentPage % pages;
-    const start = recentPage * pageSize;
-    visibleGames = games.slice(start, start + pageSize);
-  }
-
-  board.innerHTML = visibleGames.map(renderGame).join("");
-  displayMode = mode;
-}
-
-async function refreshScores() {
-  if (refreshing) return;
-  refreshing = true;
-
-  try {
-    const activeLeagues = enabledLeagues();
-
-    message.textContent = "Updating scores...";
-
-    const results = await Promise.allSettled(
-      activeLeagues.map(async league => {
-        const data = await getScoreboard(league);
-        const events = data.events || [];
-        return events
-          .map(event => gameInfo(event, league.name))
-          .filter(Boolean);
-      })
-    );
-
-    let todayGames = [];
-    let errors = 0;
-
-    results.forEach(result => {
-      if (result.status === "fulfilled") {
-        todayGames.push(...result.value.filter(game =>
-          game.isLive || isToday(game)
-        ));
-      } else {
-        errors++;
-        console.warn("Scoreboard request failed:", result.reason);
-      }
-    });
-
-    todayGames = sortGames(todayGames);
-
-    const liveGames = todayGames.filter(game => game.isLive);
-    const nonFinalToday = todayGames.filter(game => !game.isFinal);
-
-    if (liveGames.length || nonFinalToday.length) {
-      renderGames(todayGames, "current");
-      message.textContent = liveGames.length
-        ? `${liveGames.length} LIVE GAME${liveGames.length === 1 ? "" : "S"} • AUTO-REFRESH ENABLED`
-        : "TODAY'S SCHEDULE • AUTO-REFRESH ENABLED";
-    } else {
-      await loadRecentGames(activeLeagues);
-    }
-
-    updated.textContent = errors === activeLeagues.length
-      ? "Feed unavailable"
-      : `Updated ${new Date().toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-          second: "2-digit"
-        })}`;
-
-  } catch (error) {
-    console.error(error);
-    message.textContent = "Connection issue • Retrying automatically";
-    if (displayMode === "idle") {
-      renderIdle("SPORTS CENTRAL", "Waiting for sports data...");
-    }
-  } finally {
-    refreshing = false;
-  }
-}
-
-async function loadRecentGames(activeLeagues) {
-  // Reuse cached finals if we already have them and can show them.
-  if (recentGames.length) {
-    renderGames(recentGames, "recent");
-    message.textContent = "NO GAMES TODAY • RECENT FINALS";
-    return;
-  }
-
-  message.textContent = "NO GAMES TODAY • LOADING RECENT FINALS";
-
-  const jobs = [];
-
-  for (const league of activeLeagues) {
-    for (let daysAgo = 1; daysAgo <= 3; daysAgo++) {
-      jobs.push((async () => {
-        const data = await getScoreboard(league, dateOffset(-daysAgo));
-        return (data.events || [])
-          .map(event => gameInfo(event, league.name))
-          .filter(game => game && game.isFinal);
-      })());
-    }
-  }
-
-  const results = await Promise.allSettled(jobs);
-  const games = [];
-
-  results.forEach(result => {
-    if (result.status === "fulfilled") {
-      games.push(...result.value);
-    }
-  });
-
-  const unique = new Map();
-  games.forEach(game => unique.set(game.id, game));
-
-  recentGames = [...unique.values()]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 36);
-
-  if (recentGames.length) {
-    renderGames(recentGames, "recent");
-    message.textContent = "NO GAMES TODAY • RECENT FINALS";
-  } else {
+function renderCurrentPage() {
+  if (!displayedGames.length) {
     renderIdle("SPORTS CENTRAL", "Waiting for the next game...");
-    message.textContent = "NO RECENT GAMES AVAILABLE";
+    return;
   }
+
+  const size = pageSize();
+  const pages = Math.ceil(displayedGames.length / size);
+
+  gamePage = gamePage % pages;
+
+  const start = gamePage * size;
+  const games = displayedGames.slice(start, start + size);
+
+  board.innerHTML = games.map(renderGame).join("");
+  displayMode = "current";
+}
+
+function renderRecentPage() {
+  if (!recentGames.length) {
+    renderIdle("SPORTS CENTRAL", "Waiting for the next game...");
+    return;
+  }
+
+  const size = pageSize();
+  const pages = Math.ceil(recentGames.length / size);
+
+  recentPage = recentPage % pages;
+
+  const start = recentPage * size;
+  const games = recentGames.slice(start, start + size);
+
+  board.innerHTML = games.map(renderGame).join("");
+  displayMode = "recent";
+}
+
+function tickerMarkup(games) {
+  if (!games.length) {
+    return `<span class="ticker-item">
+      NO GAMES AVAILABLE — CHECKING FOR UPDATES
+    </span>`;
+  }
+
+  return games.map(game => {
+    const awayName = teamShortName(game.away);
+    const homeName = teamShortName(game.home);
+
+    const status = game.isLive
+      ? `<span class="ticker-live">● LIVE ${escapeHTML(game.status)}</span>`
+      : game.isFinal
+        ? `<span class="ticker-final">FINAL</span>`
+        : `<span>${escapeHTML(game.status)}</span>`;
+
+    const score =
+      `${awayName} ${game.away.score ?? "–"} - ` +
+      `${game.home.score ?? "–"} ${homeName}`;
+
+    return `
+      <span class="ticker-item">
+        <span class="ticker-league">${escapeHTML(game.league)}</span>
+        ${status}
+        <span class="ticker-score">${escapeHTML(score)}</span>
+        <span class="ticker-separator">◆</span>
+      </span>`;
+  }).join("");
+}
+
+function updateTicker(games) {
+  const content = tickerMarkup(games);
+
+  if (content === tickerSignature) return;
+  tickerSignature = content;
+
+  // Two copies create a continuous scrolling loop.
+  tickerTrack.innerHTML = content + content;
+
+  // Restart animation only when the scores change.
+  tickerTrack.style.animation = "none";
+  void tickerTrack.offsetWidth;
+  tickerTrack.style.animation = "";
 }
 
 function updateClock() {
@@ -673,41 +731,183 @@ function updateClock() {
     });
 
   const idleClock = document.getElementById("idle-clock");
+
   if (idleClock) {
-    idleClock.textContent = now.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit"
-    });
+    idleClock.textContent =
+      now.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+      });
   }
 }
 
-document.getElementById("fullscreen").addEventListener("click", async () => {
-  try {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen();
-    } else {
-      await document.exitFullscreen();
+async function loadRecentGames(activeLeagues) {
+  message.textContent = "NO GAMES TODAY • LOADING RECENT FINALS";
+
+  // Fetch two recent days for each league.
+  const jobs = [];
+
+  for (const league of activeLeagues) {
+    for (let ago = 1; ago <= 2; ago++) {
+      jobs.push(
+        getScoreboard(league, dateOffset(-ago))
+          .then(data => (data.events || [])
+            .map(event => gameInfo(event, league.name))
+            .filter(game => game && game.isFinal))
+          .catch(error => {
+            console.warn("Recent scores unavailable:", error);
+            return [];
+          })
+      );
     }
-  } catch (error) {
-    console.warn("Fullscreen unavailable:", error);
   }
-});
 
-setInterval(updateClock, 1000);
+  const results = await Promise.all(jobs);
+  const unique = new Map();
 
-// Cycle through pages of recent finals every 12 seconds.
+  results.flat().forEach(game => unique.set(game.id, game));
+
+  recentGames = [...unique.values()]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 40);
+
+  if (recentGames.length) {
+    recentPage = 0;
+    renderRecentPage();
+    updateTicker(recentGames);
+    message.textContent = "NO GAMES TODAY • RECENT FINALS";
+  } else {
+    renderIdle("SPORTS CENTRAL", "Waiting for the next game...");
+    updateTicker([]);
+    message.textContent = "NO RECENT GAMES AVAILABLE";
+  }
+}
+
+async function refreshScores() {
+  if (refreshing) return;
+  refreshing = true;
+
+  try {
+    const activeLeagues = enabledLeagues();
+
+    message.textContent = "UPDATING SCORES...";
+
+    const results = await Promise.allSettled(
+      activeLeagues.map(async league => {
+        const data = await getScoreboard(league);
+
+        return (data.events || [])
+          .map(event => gameInfo(event, league.name))
+          .filter(Boolean);
+      })
+    );
+
+    let todayGames = [];
+    let successfulFeeds = 0;
+
+    results.forEach(result => {
+      if (result.status === "fulfilled") {
+        successfulFeeds++;
+        todayGames.push(...result.value.filter(game =>
+          game.isLive || isToday(game)
+        ));
+      } else {
+        console.warn("Score feed failed:", result.reason);
+      }
+    });
+
+    if (successfulFeeds === 0) {
+      message.textContent = "FEED UNAVAILABLE • RETRYING";
+
+      // Preserve the last good display if the network fails.
+      if (!lastGoodDataTime) {
+        renderIdle("SPORTS CENTRAL", "Reconnecting to sports feeds...");
+      }
+
+      updated.textContent = "CONNECTION ISSUE";
+      return;
+    }
+
+    lastGoodDataTime = Date.now();
+
+    todayGames = sortGames(todayGames);
+
+    const hasUpcomingOrLive = todayGames.some(game =>
+      !game.isFinal
+    );
+
+    if (hasUpcomingOrLive) {
+      displayedGames = todayGames;
+      gamePage = 0;
+
+      renderCurrentPage();
+      updateTicker(displayedGames);
+
+      const liveCount = todayGames.filter(g => g.isLive).length;
+
+      message.textContent = liveCount
+        ? `${liveCount} LIVE GAME${liveCount === 1 ? "" : "S"} • AUTO-REFRESH ON`
+        : "TODAY'S GAMES • AUTO-REFRESH ON";
+    } else {
+      displayedGames = [];
+
+      await loadRecentGames(activeLeagues);
+    }
+
+    updated.textContent =
+      "UPDATED " + new Date().toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+
+  } catch (error) {
+    console.error("Scoreboard update failed:", error);
+    message.textContent = "CONNECTION ISSUE • RETRYING";
+  } finally {
+    refreshing = false;
+  }
+}
+
+document.getElementById("fullscreen")
+  .addEventListener("click", async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.warn("Fullscreen unavailable:", error);
+    }
+  });
+
+// Rotate to the next set of matchups every 12 seconds.
 setInterval(() => {
-  if (displayMode === "recent" && recentGames.length > 6) {
+  if (displayMode === "current" && displayedGames.length) {
+    gamePage++;
+    renderCurrentPage();
+  } else if (displayMode === "recent" && recentGames.length) {
     recentPage++;
-    renderGames(recentGames, "recent");
+    renderRecentPage();
   }
 }, 12000);
 
-// Refresh live and scheduled scores every 30 seconds.
-updateClock();
-refreshScores();
+// Update live scores every 30 seconds.
 setInterval(refreshScores, 30000);
+
+// Recalculate card count when orientation or window size changes.
+window.addEventListener("resize", () => {
+  if (displayMode === "current") {
+    renderCurrentPage();
+  } else if (displayMode === "recent") {
+    renderRecentPage();
+  }
+});
+
+updateClock();
+setInterval(updateClock, 1000);
+refreshScores();
 </script>
 </body>
 </html>
-```
